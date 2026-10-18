@@ -188,6 +188,50 @@ fn test_write_bytes_budget() {
 }
 ```
 
+### `#[budget_events_lt(N)]`
+
+Asserts that the event count emitted by the test's `env` is strictly less than `N`.
+
+Events represent the count of contract events published during execution. This macro measures local event emission as a local proxy.
+
+```rust
+use budget_macros::budget_events_lt;
+
+#[test]
+#[budget_events_lt(10)]
+fn test_events_budget() {
+    let env = Env::default();
+    // ... emit events via contract ...
+}
+```
+
+Failure message format:
+```
+Event count {actual} exceeded limit {N}
+```
+
+### `#[budget_ledger_entries_lt(N)]`
+
+Asserts that the ledger entry cost count triple (read, write, total) used by `env` is strictly less than `N`.
+
+Ledger entry counts track the volume of ledger entries accessed and modified. This macro measures local tracking data as a proxy.
+
+```rust
+use budget_macros::budget_ledger_entries_lt;
+
+#[test]
+#[budget_ledger_entries_lt(50)]
+fn test_ledger_entries_budget() {
+    let env = Env::default();
+    // ... access ledger entries via contract ...
+}
+```
+
+Failure message format:
+```
+Ledger entry count (read: {}, write: {}, total: {}) exceeded limit {N}
+```
+
 ### `#[budget_read_bytes_lt(N)]`
 
 Asserts that the ledger read bytes used by `env` are strictly less than `N`.
@@ -558,6 +602,8 @@ The real failure mode here is drift, not the one-time gap this page used to have
 | `--check` | no | Compare measured metrics against `cpu_limit` / `read_limit` / `write_limit` declared per function in `budget.toml`; print a per-function+metric pass/fail line and exit non-zero on any breach or failed configured simulation |
 | `--record <PATH>` | no | Record every transport response (deploy, invoke-build, simulate RPC) into a replayable fixture file at `PATH`. The run itself still talks to the network; the fixture lets a later `--replay` reproduce the same report offline. Mutually exclusive with `--replay` |
 | `--replay <PATH>` | no | Replay a run from a fixture written by `--record`. The whole pipeline runs offline — no `stellar` CLI, no `curl`, no network access — and the report is byte-identical to the recorded run. Mutually exclusive with `--record` |
+| `budget_events_lt` | `N`, `env`, `config`, `env_file` | Assert that the emitted event count is strictly less than `N` |
+| `budget_ledger_entries_lt` | `N`, `env`, `config`, `env_file` | Assert that the ledger entry access count triple is strictly less than `N` |
 
 Configuration precedence: a CLI flag overrides the `budget.toml` value. If neither provides `network`/`source`, the command exits with an error naming the missing field.
 
